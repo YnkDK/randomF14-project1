@@ -8,6 +8,7 @@
 import sys		# sys.exit
 import urllib	# urllib.urlencode
 import urllib2	# Handle the random.org api
+import shelve
 
 def getQuota():
 	"""	The Quota Checker allows you to examine your quota 
@@ -24,7 +25,7 @@ def getQuota():
 		if e.code == 503:
 			print 'i.e. your quota is exceeded.'
 		sys.exit(1)
-	except URLError as e:
+	except urllib2.URLError as e:
 		print 'Could not get quota:', e.reason[1]
 		sys.exit(1)
 
@@ -88,7 +89,7 @@ def getIntegers(minimum, maximum, num, base = 10, rnd = 'new'):
 	except urllib2.HTTPError as e:
 		print 'Could not get integers, HTTP error code', e.code, e.read()
 		sys.exit(1)
-	except URLError as e:
+	except urllib2.URLError as e:
 		print 'Could not get integers:', e.reason[1]
 		sys.exit(1)
 		
@@ -102,14 +103,37 @@ def getIntegers(minimum, maximum, num, base = 10, rnd = 'new'):
 	return result
 
 if __name__ == '__main__':
-	""" Example usage: """
+	from threading import Thread
+	
+	def saveIntegers(db, integers):
+		l = db['len']
+		for integer in integers:
+			l += 1
+			db[str(l)] = int(integer)
+		db['len'] = l	
+		
 	minimum = -1e9
 	maximum = 1e9
-	with open('randomNumbers.txt', 'a') as r:
-		while True:
+	db = shelve.open('randomNumbers.db', 'w')
+	rn = None
+	while True:
+		if rn is None:
 			q = getQuota()
 			if q < 1:
 				break
 			num = min(1e4, q/32)
 			rn = getIntegers(minimum, maximum, num)
-			r.writelines(["%d " % item for item in rn])
+		
+		# Save the integers in such a way, that they will
+		# complete even on a keyboard interrupt
+		a = Thread(target=saveIntegers, args=(db, rn))
+		a.start()
+		# Ask for the next batch while saving the old ones
+		q = getQuota()
+		if q < 1:
+			break
+		num = min(1e4, q/32)
+		rn = getIntegers(minimum, maximum, num)
+		# Do not continue until the old is saved
+		a.join()
+			
