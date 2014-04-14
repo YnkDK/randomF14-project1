@@ -107,10 +107,8 @@ if __name__ == '__main__':
 	
 	def saveIntegers(db, integers):
 		l = db['len']
-		for integer in integers:
-			l += 1
-			db[str(l)] = int(integer)
-		db['len'] = l	
+		db[str(l)] = [int(i) for i in integers]
+		db['len'] = l + 1
 		
 	minimum = -1e9
 	maximum = 1e9
