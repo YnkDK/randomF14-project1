@@ -110,9 +110,18 @@ if __name__ == '__main__':
 		db[str(l)] = [int(i) for i in integers]
 		db['len'] = l + 1
 		
+	# Print how to close to aviod corruption
+	# in the database!
+	print '========================='
+	print 'Notice: Close with Ctrl-C'
+	print '========================='
 	minimum = -1e9
 	maximum = 1e9
-	db = shelve.open('randomNumbers.db', 'w')
+	db = shelve.open('randomNumbers.db', 'c')
+	# Create and initilize the database if needed
+	if 'len' not in db:
+		db['len'] = 0
+		
 	rn = None
 	while True:
 		if rn is None:
