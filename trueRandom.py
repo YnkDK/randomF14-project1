@@ -117,7 +117,7 @@ if __name__ == '__main__':
 	print '========================='
 	minimum = int(-1e9)
 	maximum = int(1e9)
-	bytes = max(minimum.bit_length(), maximum.bit_length())/8
+	bytesUsed = max(minimum.bit_length(), maximum.bit_length())/8
 	db = shelve.open('randomNumbers.db', 'c')
 	# Create and initilize the database if needed
 	if 'len' not in db:
@@ -129,7 +129,7 @@ if __name__ == '__main__':
 			q = getQuota()
 			if q < 1:
 				break
-			num = min(1e4, q/bytes)
+			num = min(1e4, q/bytesUsed)
 			rn = getIntegers(minimum, maximum, num)
 		
 		# Save the integers in such a way, that they will
@@ -140,7 +140,7 @@ if __name__ == '__main__':
 		q = getQuota()
 		if q < 1:
 			break
-		num = min(1e4, q/32)
+		num = min(1e4, q/bytesUsed)
 		rn = getIntegers(minimum, maximum, num)
 		# Do not continue until the old is saved
 		a.join()
