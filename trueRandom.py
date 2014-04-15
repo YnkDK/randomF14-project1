@@ -8,7 +8,8 @@
 import sys		# sys.exit
 import urllib	# urllib.urlencode
 import urllib2	# Handle the random.org api
-import shelve
+import shelve	# Database handling
+from math import ceil
 
 def getQuota():
 	"""	The Quota Checker allows you to examine your quota 
@@ -117,22 +118,19 @@ if __name__ == '__main__':
 	print '========================='
 	minimum = int(-1e9)
 	maximum = int(1e9)
-	bytesUsed = max(minimum.bit_length(), maximum.bit_length())/8
+	bytesUsed = max(minimum.bit_length(), maximum.bit_length())/8.0
 	db = shelve.open('randomNumbers.db', 'c')
 	# Create and initilize the database if needed
 	if 'len' not in db:
 		db['len'] = 0
 		
-	rn = None
-	while True:
-		if rn is None:
-			q = getQuota()
-			if q < 1:
-				break
-			num = min(1e4, q/bytesUsed)
-			rn = getIntegers(minimum, maximum, num)
-		
-		# Save the integers in such a way, that they will
+	# Get first batch
+	q = getQuota()
+	if q < 1:
+		sys.exit(0)
+	num = min(1e4, ceil(q/bytesUsed))
+	rn = getIntegers(minimum, maximum, num)
+	while True:# Save the integers in such a way, that they will
 		# complete even on a keyboard interrupt
 		a = Thread(target=saveIntegers, args=(db, rn))
 		a.start()
@@ -140,7 +138,7 @@ if __name__ == '__main__':
 		q = getQuota()
 		if q < 1:
 			break
-		num = min(1e4, q/bytesUsed)
+		num = min(1e4, ceil(q/bytesUsed))
 		rn = getIntegers(minimum, maximum, num)
 		# Do not continue until the old is saved
 		a.join()
