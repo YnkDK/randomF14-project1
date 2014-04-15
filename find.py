@@ -28,7 +28,7 @@ next.current = next.db['0']
 next.i = 1
 
 
-def generateL(n):
+def generateL(n, rng = None):
 	"""	Generates a nonempty list of distinct numbers
 	
 		Parameters
@@ -36,22 +36,71 @@ def generateL(n):
 		n : int
 			The length of the list
 	"""
-	if n < 1:
-		return [next()]
-	# Ensure unique integers
-	L = set()
-	add = L.add
-	while len(L) < n:
-		add(next())
-	return list(L)
+	if rng is None:
+		if n < 1:
+			return [next()]
+		# Ensure unique integers
+		L = set()
+		add = L.add
+		while len(L) < n:
+			add(next())
+		return list(L)
+	else:
+		rng.seed(next())
+		if n < 1:
+			return [rng.randint(int(-1e9), int(1e9))]
+		L = set()
+		add = L.add
+		while len(L) < n:
+			add(rng.randint(int(-1e9), int(1e9)))
+		return list(L)
 
-def find(L, k):
+def find(L, k, rng = None):
 	"""	Finds the k'th element in L
 	"""
 	find.cmp = 0
 	# Find k'th element on a copy of L
-	return findRec(list(L), k, 1)
+	if rng is None:
+		return findRec(list(L), k, 1)
+	else:
+		rng.seed(next())
+		return findRecMT(list(L), k, 1, rng)
 
+def findRecMT(L, k, d, rng):
+	# Line 1
+	# Select e randomly from L using the uniform distribution
+	e = rng.choice(L)
+	
+	# Line 2
+	# Split L' = L - {e} into the two sublists
+	# 	L1 = [ai in L | ai < e]
+	#	L2 = [ai in L | ai > e]
+	# by comparing e to each element in L'
+	L.remove(e)
+	L1 = []
+	L2 = []
+	app1 = L1.append
+	app2 = L2.append
+
+	find.cmp += len(L)
+	for element in L:
+		if element < e:
+			app1(element)
+		else:
+			app2(element)
+	
+	# Line 3
+	lenL1 = len(L1)
+	if lenL1 > k:
+		# If |L1| > k then make a recursive call on L1 and k
+		return findRecMT(L1, k, d + 1, rng)
+	elif lenL1 < k:
+		# If |L1| < k then make a recursive call on L1 and k - 1 - |L1|
+		return findRecMT(L2, k - 1 - lenL1, d + 1, rng)
+	else:
+		# Return e
+		return e, d, find.cmp
+		
 def findRec(L, k, d):
 	# Line 1
 	# Select e randomly from L using the uniform distribution
@@ -89,7 +138,7 @@ def findRec(L, k, d):
 		# Return e
 		return e, d, find.cmp
 		
-def runExperiments(n):
+def runExperiments(n, rng):
 	"""	Runs 1.5*n experiments on k = 0, n/4, n/2, 3n/4, n-1
 		and writes the output to stdout. Furthermore a naive
 		control of correctness is performed.
@@ -100,18 +149,18 @@ def runExperiments(n):
 			The length of the lists used in the experiments
 	"""
 	kStr = ['"0"', '"n/4"', '"n/2"', '"3n/4"', '"n-1"']
-	runs = int(1.5*n)
+	runs = int(1*n)
 	# Make at least n runs
 	for i in range(runs):
 		# Generate the list
-		L = generateL(n)
+		L = generateL(n, rng)
 		# Sort it for later use
 		sortedL = sorted(L)
 		# Index in the kStr that are currently used
 		kIndex = 0
 		for k in [0, n/4, n/2, 3*n/4, n-1]:
 			# Find k in L
-			res = find(L, k)
+			res = find(L, k, rng)
 			# Naive correctness test :)
 			if int(sortedL[k]) is not int(res[0]):
 				# If the algorithm is wrong, STOP!
@@ -123,8 +172,10 @@ def runExperiments(n):
 			kIndex += 1
 		
 if __name__ == '__main__':
-	runExperiments(int(1e2))
-	runExperiments(int(1e3))
-	runExperiments(int(1e4))
+	import random
+	
+	runExperiments(int(1e2), random)
+	runExperiments(int(1e3), random)
+	runExperiments(int(1e4), random)
 	
 	print next.i
