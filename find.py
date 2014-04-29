@@ -8,6 +8,7 @@
 """
 import sys	# sys.exit
 import shelve # Database with random numbers
+import anydbm
 
 def next():
 	"""	Returns the next random number found in the database.
@@ -23,9 +24,13 @@ def next():
 	return next.current.pop(0)
 
 # Initilize 'static' variables for next
-next.db = shelve.open('randomNumbers.db', 'r')
-next.current = next.db['0']
-next.i = 1
+try:
+	next.db = shelve.open('randomNumbers.db', 'r')
+	next.current = next.db['0']
+	next.i = 1
+except anydbm.error as e:
+    del globals()[next.func_name]
+
 
 
 def generateL(n, rng = None):
@@ -46,7 +51,6 @@ def generateL(n, rng = None):
 			add(next())
 		return list(L)
 	else:
-		rng.seed(next())
 		if n < 1:
 			return [rng.randint(int(-1e9), int(1e9))]
 		L = set()
@@ -63,7 +67,6 @@ def find(L, k, rng = None):
 	if rng is None:
 		return findRec(list(L), k, 1)
 	else:
-		rng.seed(next())
 		return findRecMT(list(L), k, 1, rng)
 
 def findRecMT(L, k, d, rng):
@@ -138,8 +141,8 @@ def findRec(L, k, d):
 		# Return e
 		return e, d, find.cmp
 		
-def runExperiments(n, rng):
-	"""	Runs 1.5*n experiments on k = 0, n/4, n/2, 3n/4, n-1
+def runExperiments(n, rng = None):
+	"""	Runs 1.2*n experiments on k = 0, n/4, n/2, 3n/4, n-1
 		and writes the output to stdout. Furthermore a naive
 		control of correctness is performed.
 		
@@ -148,16 +151,15 @@ def runExperiments(n, rng):
 		n : int
 			The length of the lists used in the experiments
 	"""
-	kStr = ['"0"', '"n/4"', '"n/2"', '"3n/4"', '"n-1"']
-	runs = int(1*n)
+	res1 = []
+	res2 = []
+	runs = int(1.2*n)
 	# Make at least n runs
 	for i in range(runs):
 		# Generate the list
 		L = generateL(n, rng)
 		# Sort it for later use
 		sortedL = sorted(L)
-		# Index in the kStr that are currently used
-		kIndex = 0
 		for k in [0, n/4, n/2, 3*n/4, n-1]:
 			# Find k in L
 			res = find(L, k, rng)
@@ -167,15 +169,37 @@ def runExperiments(n, rng):
 				print "Looked for", sortedL[k], "but got", res[0]
 				sys.exit(1)
 			# Print the result (pipe to a file)
-			print int((1000.0*i)/runs)/10.0, i, n, kStr[kIndex], res[1], res[2]
-			# Go to next k
-			kIndex += 1
+			#print int((1000.0*i)/runs)/10.0, i, n, kStr[kIndex], res[1], res[2]
+			res1.append(res[1])
+			res2.append(res[2])
+	return res1, res2
 		
 if __name__ == '__main__':
 	import random
+	from numpy import median
 	
-	runExperiments(int(1e2), random)
-	runExperiments(int(1e3), random)
-	runExperiments(int(1e4), random)
+	if len(sys.argv) == 2 and sys.argv[1] == 'randomNumbers.db':
+		selections, comparisons = runExperiments(int(1e2))
+		print int(1e2), max(selections), min(selections), float(sum(selections))/len(selections), median(selections)
+		print int(1e2), max(comparisons), min(comparisons), float(sum(comparisons))/len(comparisons), median(comparisons)
+		selections, comparisons = runExperiments(int(1e3))
+		print int(1e3), max(selections), min(selections), float(sum(selections))/len(selections), median(selections)
+		print int(1e3), max(comparisons), min(comparisons), float(sum(comparisons))/len(comparisons), median(comparisons)
+		selections, comparisons = runExperiments(int(1e4))
+		print int(1e4), max(selections), min(selections), float(sum(selections))/len(selections), median(selections)
+		print int(1e4), max(comparisons), min(comparisons), float(sum(comparisons))/len(comparisons), median(comparisons)
+	else:
+		# Seed from
+		# http://www.random.org/strings/?num=1&len=20&digits=on&upperalpha=on&loweralpha=on&unique=off&format=plain&rnd=date.2014-04-01
+		random.seed('bmMNXgGHmg0DQ9rYmoYy')
+		selections, comparisons = runExperiments(int(1e2), random)
+		print int(1e2), max(selections), min(selections), float(sum(selections))/len(selections), median(selections)
+		print int(1e2), max(comparisons), min(comparisons), float(sum(comparisons))/len(comparisons), median(comparisons)
+		selections, comparisons = runExperiments(int(1e3), random)
+		print int(1e3), max(selections), min(selections), float(sum(selections))/len(selections), median(selections)
+		print int(1e3), max(comparisons), min(comparisons), float(sum(comparisons))/len(comparisons), median(comparisons)
+		selections, comparisons = runExperiments(int(1e4), random)
+		print int(1e4), max(selections), min(selections), float(sum(selections))/len(selections), median(selections)
+		print int(1e4), max(comparisons), min(comparisons), float(sum(comparisons))/len(comparisons), median(comparisons)	
 	
 	print next.i
