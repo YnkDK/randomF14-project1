@@ -111,6 +111,7 @@ if __name__ == '__main__':
 		db[str(l)] = [int(i) for i in integers]
 		db['len'] = l + 1
 		
+		
 	# Print how to close to aviod corruption
 	# in the database!
 	print '========================='
@@ -142,4 +143,3 @@ if __name__ == '__main__':
 		rn = getIntegers(minimum, maximum, num)
 		# Do not continue until the old is saved
 		a.join()
-			
