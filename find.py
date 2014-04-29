@@ -200,6 +200,4 @@ if __name__ == '__main__':
 		print int(1e3), max(comparisons), min(comparisons), float(sum(comparisons))/len(comparisons), median(comparisons)
 		selections, comparisons = runExperiments(int(1e4), random)
 		print int(1e4), max(selections), min(selections), float(sum(selections))/len(selections), median(selections)
-		print int(1e4), max(comparisons), min(comparisons), float(sum(comparisons))/len(comparisons), median(comparisons)	
-	
-	print next.i
+		print int(1e4), max(comparisons), min(comparisons), float(sum(comparisons))/len(comparisons), median(comparisons)
